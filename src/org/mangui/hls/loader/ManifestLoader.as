@@ -50,6 +50,8 @@
         private var _retry_count : int;
         /* alt audio tracks */
         private var _alt_audio_tracks : Vector.<AltAudioTrack>;
+		/* query string extracted from _url*/
+		private var _query: String = "";
 
         /** Setup the loader. **/
         public function ManifestLoader(hls : HLS) {
@@ -115,6 +117,13 @@
             _close();
             _closed = false;
             _url = url;
+			
+			// Storing query string of _url in _query
+			if( url.indexOf('?') >= 0 )
+			{
+				_query = url.substr(url.indexOf('?'));
+			}
+			
             _levels = new Vector.<Level>();
             _canStart = false;
             _reload_playlists_timer = getTimer();
@@ -148,7 +157,7 @@
                 CONFIG::LOGGING {
                     Log.debug("level " + level + " playlist:\n" + string);
                 }
-                var frags : Vector.<Fragment> = Manifest.getFragments(string, url);
+                var frags : Vector.<Fragment> = Manifest.getFragments(string, url, _query);
                 // set fragment and update sequence number range
                 _levels[level].updateFragments(frags);
                 _levels[level].targetduration = Manifest.getTargetDuration(string);
@@ -201,7 +210,7 @@
                         Log.debug("adaptive playlist:\n" + string);
                     }
                     // adaptative playlist, extract levels from playlist, get them and parse them
-                    _levels = Manifest.extractLevels(_hls, string, _url);
+                    _levels = Manifest.extractLevels(_hls, string, _url, _query);
                     // retrieve start level from helper function
                     _current_level = startlevel;
                     _hls.dispatchEvent(new HLSEvent(HLSEvent.MANIFEST_PARSED, _levels));
@@ -211,7 +220,7 @@
                             Log.debug("alternate audio level found");
                         }
                         // parse alternate audio tracks
-                        _alt_audio_tracks = Manifest.extractAltAudioTracks(string, _url);
+                        _alt_audio_tracks = Manifest.extractAltAudioTracks(string, _url, _query);
                         CONFIG::LOGGING {
                             if (_alt_audio_tracks.length > 0) {
                                 Log.debug(_alt_audio_tracks.length + " alternate audio tracks found");

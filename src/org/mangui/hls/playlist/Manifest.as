@@ -119,7 +119,7 @@
         }
 
         /** Extract fragments from playlist data. **/
-        public static function getFragments(data : String, base : String = '') : Vector.<Fragment> {
+        public static function getFragments(data : String, base : String, query: String) : Vector.<Fragment> {
             var fragments : Vector.<Fragment> = new Vector.<Fragment>();
             var lines : Array = data.split("\n");
             // fragment seqnum
@@ -213,7 +213,7 @@
                                 }
                                 break;
                             case "URI":
-                                decrypt_url = _extractURL(value, base);
+                                decrypt_url = _extractURL(value, base, query);
                                 break;
                             case "IV":
                                 decrypt_iv = Hex.toArray(zeropad(value.substr("0x".length), 32));
@@ -251,7 +251,7 @@
                     // unsupported/custom tags, store them
                     tag_list.push(line);
                 } else if (extinf_found == true) {
-                    var url : String = _extractURL(line, base);
+                    var url : String = _extractURL(line, base, query);
                     var fragment_decrypt_iv : ByteArray;
                     if (decrypt_url != null) {
                         /* as per HLS spec :
@@ -292,7 +292,7 @@
         };
 
         /** Extract levels from manifest data. **/
-        public static function extractLevels(hls : HLS, data : String, base : String = '') : Vector.<Level> {
+        public static function extractLevels(hls : HLS, data : String, base : String, query: String) : Vector.<Level> {
             var levels : Array = [];
             var level : Level;
             var lines : Array = data.split("\n");
@@ -335,7 +335,7 @@
                         }
                     }
                 } else if (level_found == true) {
-                    level.url = _extractURL(line, base);
+                    level.url = _extractURL(line, base, query);
                     levels.push(level);
                     level_found = false;
                 }
@@ -356,7 +356,7 @@
         };
 
         /** Extract Alternate Audio Tracks from manifest data. **/
-        public static function extractAltAudioTracks(data : String, base : String = '') : Vector.<AltAudioTrack> {
+        public static function extractAltAudioTracks(data : String, base : String, query: String) : Vector.<AltAudioTrack> {
             var altAudioTracks : Vector.<AltAudioTrack> = new Vector.<AltAudioTrack>();
             var lines : Array = data.split("\n");
             var i : int = 0;
@@ -397,7 +397,7 @@
                                 alt_default = true;
                             }
                         } else if (param.indexOf('URI') > -1) {
-                            alt_url = Manifest._extractURL(param.split('=')[1], base);
+                            alt_url = Manifest._extractURL(param.split('=')[1], base, query);
                         }
                     }
                     var alternate_audio : AltAudioTrack = new AltAudioTrack(alt_group_id, alt_lang, alt_name, alt_autoselect, alt_default, alt_url);
@@ -433,14 +433,17 @@
         }
 
         /** Extract URL (check if absolute or not). **/
-        private static function _extractURL(path : String, base : String) : String {
+        private static function _extractURL(path : String, base : String, query: String) : String {
             var _prefix : String = null;
             var _suffix : String = null;
+			var _query  : String = "";
             // trim white space if any
             path.replace(replacespace, "");
             if (path.substr(0, 7) == 'http://' || path.substr(0, 8) == 'https://') {
                 return path;
             } else {
+				
+				
                 // Remove querystring
                 if (base.indexOf('?') > -1) {
                     base = base.substr(0, base.indexOf('?'));
@@ -453,9 +456,9 @@
                     _prefix = base.substr(0, base.indexOf("//") + 2);
                     _suffix = base.substr(base.indexOf("//") + 2);
                     // return http[s]://domain/subdomain:1234/path
-                    return _prefix + _suffix.substr(0, _suffix.indexOf("/")) + path;
+                    return _prefix + _suffix.substr(0, _suffix.indexOf("/")) + path + query;
                 } else {
-                    return base.substr(0, base.lastIndexOf('/') + 1) + path;
+                    return base.substr(0, base.lastIndexOf('/') + 1) + path + query;
                 }
             }
         };
