@@ -436,11 +436,10 @@
         private static function _extractURL(path : String, base : String, query: String) : String {
             var _prefix : String = null;
             var _suffix : String = null;
-			var _query  : String = "";
             // trim white space if any
             path.replace(replacespace, "");
             if (path.substr(0, 7) == 'http://' || path.substr(0, 8) == 'https://') {
-                return path;
+                return path + query;
             } else {
 				
 				
